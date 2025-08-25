@@ -1,0 +1,203 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Expense Tracker Design System - Professional Financial UI */
+
+@layer base {
+  :root {
+    /* Financial App Color Palette */
+    --background: 220 20% 98%;
+    --foreground: 220 15% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 15% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 15% 15%;
+
+    /* Professional Blue Primary */
+    --primary: 220 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 220 100% 45%;
+
+    /* Success Green Secondary */
+    --secondary: 142 70% 45%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-hover: 142 70% 40%;
+
+    /* Accent Teal */
+    --accent: 178 100% 42%;
+    --accent-foreground: 0 0% 100%;
+
+    --muted: 220 20% 96%;
+    --muted-foreground: 220 10% 50%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 20% 90%;
+    --input: 220 20% 96%;
+    --ring: 220 100% 50%;
+
+    --radius: 0.75rem;
+
+    /* Financial UI Specific Colors */
+    --expense-red: 0 84% 60%;
+    --income-green: 142 70% 45%;
+    --neutral-gray: 220 10% 50%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(220 100% 50%), hsl(220 100% 60%));
+    --gradient-success: linear-gradient(135deg, hsl(142 70% 45%), hsl(142 70% 55%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(220 20% 98%));
+    
+    /* Shadows */
+    --shadow-card: 0 4px 6px -1px hsl(220 20% 0% / 0.1), 0 2px 4px -1px hsl(220 20% 0% / 0.06);
+    --shadow-elevated: 0 20px 25px -5px hsl(220 20% 0% / 0.1), 0 10px 10px -5px hsl(220 20% 0% / 0.04);
+    
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    --background: 220 20% 8%;
+    --foreground: 220 15% 85%;
+
+    --card: 220 20% 10%;
+    --card-foreground: 220 15% 85%;
+
+    --popover: 220 20% 10%;
+    --popover-foreground: 220 15% 85%;
+
+    --primary: 220 100% 60%;
+    --primary-foreground: 220 20% 8%;
+    --primary-hover: 220 100% 55%;
+
+    --secondary: 142 70% 50%;
+    --secondary-foreground: 220 20% 8%;
+    --secondary-hover: 142 70% 45%;
+
+    --accent: 178 100% 47%;
+    --accent-foreground: 220 20% 8%;
+
+    --muted: 220 20% 15%;
+    --muted-foreground: 220 10% 60%;
+
+    --destructive: 0 84% 65%;
+    --destructive-foreground: 220 20% 8%;
+
+    --border: 220 20% 20%;
+    --input: 220 20% 15%;
+    --ring: 220 100% 60%;
+
+    --expense-red: 0 84% 65%;
+    --income-green: 142 70% 50%;
+    --neutral-gray: 220 10% 60%;
+    
+    --gradient-primary: linear-gradient(135deg, hsl(220 100% 60%), hsl(220 100% 70%));
+    --gradient-success: linear-gradient(135deg, hsl(142 70% 50%), hsl(142 70% 60%));
+    --gradient-card: linear-gradient(145deg, hsl(220 20% 10%), hsl(220 20% 12%));
+    
+    --shadow-card: 0 4px 6px -1px hsl(220 20% 0% / 0.3), 0 2px 4px -1px hsl(220 20% 0% / 0.2);
+    --shadow-elevated: 0 20px 25px -5px hsl(220 20% 0% / 0.3), 0 10px 10px -5px hsl(220 20% 0% / 0.2);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-inter;
+  }
+
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .gradient-success {
+    background: var(--gradient-success);
+  }
+
+  .gradient-card {
+    background: var(--gradient-card);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .transition-smooth {
+    transition: var(--transition-smooth);
+  }
+}
+
+/* Override DaisyUI input styles to use our design system */
+@layer components {
+  .input {
+    @apply flex h-10 w-full rounded-md border border-input bg-input px-3 py-2 text-base text-foreground ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm;
+  }
+
+  /* Fix date input calendar icon visibility */
+  input[type="date"] {
+    @apply text-foreground;
+    color-scheme: light dark;
+  }
+  
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    @apply text-foreground opacity-70 hover:opacity-100;
+    filter: invert(1);
+  }
+  
+  .dark input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0);
+  }
+
+  /* Override DaisyUI checkbox styles for proper visibility */
+  .checkbox {
+    color: inherit !important;
+  }
+  
+  .select {
+    @apply flex h-10 w-full rounded-md border border-input bg-input px-3 py-2 text-base text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm;
+  }
+  
+  .textarea {
+    @apply flex min-h-[60px] w-full rounded-md border border-input bg-input px-3 py-2 text-base text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm;
+  }
+  
+  .file-input {
+    @apply flex h-10 w-full rounded-md border border-input bg-input px-3 py-2 text-base text-foreground ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm;
+  }
+
+  /* Override DaisyUI table styles for proper contrast */
+  .table {
+    @apply w-full text-sm text-foreground;
+  }
+  
+  .table th {
+    @apply bg-muted/50 text-muted-foreground font-medium text-left px-4 py-3 border-b border-border;
+  }
+  
+  .table td {
+    @apply px-4 py-3 border-b border-border text-foreground;
+  }
+  
+  .table-zebra tbody tr:nth-child(even) {
+    @apply bg-muted/20 text-foreground;
+  }
+  
+  .table-zebra tbody tr:nth-child(odd) {
+    @apply bg-background text-foreground;
+  }
+  
+  .table tbody tr:hover {
+    @apply bg-muted/30 text-foreground;
+  }
+}
