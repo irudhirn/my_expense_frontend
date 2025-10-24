@@ -1,5 +1,28 @@
 import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
+import { devtools, persist, createJSONStorage } from 'zustand/middleware';
+
+type AuthStore = {
+  token: string,
+  accessToken: string,
+  refreshToken: string,
+  setToken: (token: string) => void
+}
+
+const useAuthStore = create<AuthStore>()(persist((set) => ({
+  token: null,
+  accessToken: null,
+  refreshToken: null,
+  setToken: (token: string) => set({ token })
+}),
+  {
+    name: 'token', // name of the item in the storage (must be unique)
+    storage: createJSONStorage(() => sessionStorage)
+  }
+));
+
+export default useAuthStore;
+
+/*
 
 // Define the shape of your app state
 interface AppState {
@@ -132,3 +155,5 @@ export const useLoading = (key?: string) =>
   useAppStore((state) => key ? state.loading[key] : state.loading);
 export const useErrors = (key?: string) => 
   useAppStore((state) => key ? state.errors[key] : state.errors);
+
+*/

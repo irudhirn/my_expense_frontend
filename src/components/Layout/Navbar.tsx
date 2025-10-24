@@ -6,6 +6,13 @@ const Navbar = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userData");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("userData");
+  }
+
   return (
     <div className="navbar bg-card shadow-card px-6">
       <div className="navbar-start">
@@ -61,7 +68,7 @@ const Navbar = () => {
           </ul>
         </div>
         
-        <Link to="/login" className="btn btn-ghost">
+        <Link to="/login" className="btn btn-ghost" onClick={logout}>
           <LogOut className="w-4 h-4" />
           Logout
         </Link>

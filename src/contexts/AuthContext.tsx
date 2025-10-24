@@ -1,7 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authService, LoginCredentials, SignupData } from '@/services/authService';
 import { toast } from '@/hooks/use-toast';
-import { useAppStore } from '@/stores/useAppStore';
+// import { useAppStore } from '@/stores/useAppStore';
+import useUserStore from '@/stores/useUserStore';
+import useAuthStore from '@/stores/useAuthStore';
+import { useNavigate } from 'react-router-dom';
 
 interface User {
   id: string;
@@ -38,10 +41,14 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
-  const resetStore = useAppStore((state) => state.resetStore);
+  // const resetStore = useAppStore((state) => state.resetStore);
+  const resetStore = () => {};
+  const { token, setToken } = useAuthStore();
+  const { user: userData, setUser: setUserData } = useUserStore();
 
   // Check for existing token on app start
   useEffect(() => {
@@ -80,15 +87,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (credentials: LoginCredentials) => {
     try {
       setIsLoading(true);
-      const response = await authService.login(credentials);
-      
+      const res: any = await authService.login(credentials);
+      console.log("login res", res);
       // Store token and user data
-      localStorage.setItem('authToken', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
+      localStorage.setItem('token', res.token);
+      localStorage.setItem('userData', JSON.stringify(res?.data?.user));
       
-      setUser(response.user);
+      setToken(res?.token);
+      setUserData(res?.data?.user);
+      setUser(res.user);
       setShowLoginDialog(false);
-      
+      navigate('/expenses', { replace: true }); // Redirect to home after successful login
       toast({
         title: "Login Successful",
         description: "Welcome back!",
@@ -134,13 +143,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      await authService.logout();
+      // await authService.logout();
+      setUserData(null);
+      setUser(null);
+      setToken(null);
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
       // Clear local storage and Zustand store
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
       setUser(null);
       resetStore(); // Clear Zustand store
       

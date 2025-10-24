@@ -1,35 +1,62 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Save, Upload, Plus, Calendar } from "lucide-react";
 import Navbar from "../components/Layout/Navbar";
+import { expenseService } from "@/services/expenseService";
 
 const AddExpense = () => {
+  const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
-    expenseName: "",
-    category: "",
-    subCategory: "",
+    title: "",
+    expenseCategory: "",
+    expenseSubCategory: "",
     vendor: "",
-    date: "",
-    amount: "",
-    type: "",
-    description: "",
+    expenseDate: "",
+    expenseAmount: "",
+    transactionType: "",
+    expenseDescription: "",
   });
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const categories = [
-    { value: "food", label: "Food & Dining", subCategories: ["Restaurants", "Groceries", "Fast Food", "Coffee"] },
-    { value: "transportation", label: "Transportation", subCategories: ["Gas", "Public Transit", "Ride Share", "Parking"] },
-    { value: "shopping", label: "Shopping", subCategories: ["Clothing", "Electronics", "Home & Garden", "Personal Care"] },
-    { value: "entertainment", label: "Entertainment", subCategories: ["Movies", "Concerts", "Games", "Books"] },
-    { value: "utilities", label: "Utilities", subCategories: ["Electricity", "Water", "Internet", "Phone"] },
-    { value: "healthcare", label: "Healthcare", subCategories: ["Doctor", "Pharmacy", "Insurance", "Dental"] },
-    { value: "other", label: "Other", subCategories: ["Miscellaneous"] },
-  ];
+  // const categories = [
+  //   { value: "food", label: "Food & Dining", subCategories: ["Restaurants", "Groceries", "Fast Food", "Coffee"] },
+  //   { value: "transportation", label: "Transportation", subCategories: ["Gas", "Public Transit", "Ride Share", "Parking"] },
+  //   { value: "shopping", label: "Shopping", subCategories: ["Clothing", "Electronics", "Home & Garden", "Personal Care"] },
+  //   { value: "entertainment", label: "Entertainment", subCategories: ["Movies", "Concerts", "Games", "Books"] },
+  //   { value: "utilities", label: "Utilities", subCategories: ["Electricity", "Water", "Internet", "Phone"] },
+  //   { value: "healthcare", label: "Healthcare", subCategories: ["Doctor", "Pharmacy", "Insurance", "Dental"] },
+  //   { value: "other", label: "Other", subCategories: ["Miscellaneous"] },
+  // ];
 
-  const getCurrentCategory = () => categories.find(cat => cat.value === formData.category);
+  const fetchCategories = async () => {
+    try{
+      const res: any = await expenseService.fetchExpenseCategories();
+      console.log("res", res);
+      setCategories(res?.categories?.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase())));
+    }catch(err){
+      console.error(err);
+    }
+  }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => { fetchCategories(); }, []);
+
+  const getCurrentCategory = () => categories.find(cat => cat.value === formData.expenseCategory);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const tempObj = { ...formData };
+
+    for (const key in tempObj) {
+      if(!tempObj[key]?.trim()) delete tempObj[key]
+    }
+
+    try{
+      const res = await expenseService.addExpense(tempObj);
+    }catch(err){
+      console.error(err);
+    }
+
     // Handle expense submission logic here
     console.log("Expense submitted:", { ...formData, receipt: selectedFile });
   };
@@ -75,8 +102,8 @@ const AddExpense = () => {
                   </label>
                   <input
                     type="text"
-                    name="expenseName"
-                    value={formData.expenseName}
+                    name="title"
+                    value={formData.title}
                     onChange={handleChange}
                     className="input input-bordered w-full"
                     placeholder="e.g., Lunch at Restaurant"
@@ -91,16 +118,16 @@ const AddExpense = () => {
                       <span className="label-text font-medium">Category *</span>
                     </label>
                     <select
-                      name="category"
-                      value={formData.category}
+                      name="expenseCategory"
+                      value={formData.expenseCategory}
                       onChange={handleChange}
                       className="select select-bordered w-full"
                       required
                     >
                       <option value="">Select Category</option>
                       {categories.map(category => (
-                        <option key={category.value} value={category.value}>
-                          {category.label}
+                        <option key={category._id} value={category._id}>
+                          {category.name}
                         </option>
                       ))}
                     </select>
@@ -111,11 +138,11 @@ const AddExpense = () => {
                       <span className="label-text font-medium">Sub-category</span>
                     </label>
                     <select
-                      name="subCategory"
-                      value={formData.subCategory}
+                      name="expenseSubCategory"
+                      value={formData.expenseSubCategory}
                       onChange={handleChange}
                       className="select select-bordered w-full"
-                      disabled={!formData.category}
+                      disabled={!formData.expenseCategory}
                     >
                       <option value="">Select Sub-category</option>
                       {getCurrentCategory()?.subCategories.map(subCat => (
@@ -131,7 +158,7 @@ const AddExpense = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="form-control">
                     <label className="label">
-                      <span className="label-text font-medium">Vendor/Paid to *</span>
+                      <span className="label-text font-medium">Vendor/Paid to</span>
                     </label>
                     <input
                       type="text"
@@ -140,7 +167,7 @@ const AddExpense = () => {
                       onChange={handleChange}
                       className="input input-bordered w-full"
                       placeholder="e.g., Starbucks"
-                      required
+                      // required
                     />
                   </div>
 
@@ -151,8 +178,8 @@ const AddExpense = () => {
                     <div className="relative">
                       <input
                         type="date"
-                        name="date"
-                        value={formData.date}
+                        name="expenseDate"
+                        value={formData.expenseDate}
                         onChange={handleChange}
                         className="input input-bordered w-full"
                         required
@@ -172,8 +199,8 @@ const AddExpense = () => {
                       <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
                       <input
                         type="number"
-                        name="amount"
-                        value={formData.amount}
+                        name="expenseAmount"
+                        value={formData.expenseAmount}
                         onChange={handleChange}
                         className="input input-bordered w-full pl-8"
                         placeholder="0.00"
@@ -189,8 +216,8 @@ const AddExpense = () => {
                       <span className="label-text font-medium">Type *</span>
                     </label>
                     <select
-                      name="type"
-                      value={formData.type}
+                      name="transactionType"
+                      value={formData.transactionType}
                       onChange={handleChange}
                       className="select select-bordered w-full"
                       required
@@ -208,8 +235,8 @@ const AddExpense = () => {
                     <span className="label-text font-medium">Short Description</span>
                   </label>
                   <textarea
-                    name="description"
-                    value={formData.description}
+                    name="expenseDescription"
+                    value={formData.expenseDescription}
                     onChange={handleChange}
                     className="textarea textarea-bordered w-full"
                     placeholder="Optional notes about this expense..."

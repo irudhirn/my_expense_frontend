@@ -11,36 +11,58 @@ import LoginDialog from "@/components/Auth/LoginDialog";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import ForgotPassword from "./pages/ForgotPassword";
 import Profile from "./pages/Profile";
 import AddExpense from "./pages/AddExpense";
 import ExpenseList from "./pages/ExpenseList";
 import NotFound from "./pages/NotFound";
+import axios from "axios";
+import ProtectedRoute from "./components/Auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
+
+const App = () => {
+  axios.interceptors.request.use((request) => {
+    const token = localStorage.getItem("token");
+
+    if(token) request.headers.Authorization = "Bearer " + token;
+    
+    return request;
+  }, (err) => {
+    return Promise.reject(err);
+  })
+
+  return (
+    <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
-        <LoginDialog />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/add-expense" element={<AddExpense />} />
-            <Route path="/expenses" element={<ExpenseList />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AuthProvider>
+            <LoginDialog />
+            <ProtectedRoute>
+              <Routes>
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/add-expense" element={<AddExpense />} />
+                <Route path="/expenses" element={<ExpenseList />} />
+              </Routes>
+            </ProtectedRoute>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              {/* <Route path="*" element={<NotFound />} /> */}
+            </Routes>
+          </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+    </QueryClientProvider>
+  )
+}
 
 export default App;
 

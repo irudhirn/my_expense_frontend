@@ -1,105 +1,63 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, Filter, Download, Edit, Trash2, List, Calendar, DollarSign, Clock } from "lucide-react";
 import { subDays, subMonths, subYears, isAfter } from "date-fns";
 import Navbar from "../components/Layout/Navbar";
+import { expenseService } from "@/services/expenseService";
 
 interface Expense {
-  id: string;
-  name: string;
-  category: string;
+  _id: string;
+  title: string;
+  expenseCategory: { _id: string, name: string };
   subCategory?: string;
-  vendor: string;
-  date: string;
-  amount: number;
-  type: "credit" | "debit";
-  description?: string;
+  vendor?: string;
+  expenseDate: string;
+  expenseAmount: number;
+  transactionType: "credit" | "debit";
+  expenseDescription?: string;
   receipt?: string;
 }
 
 const ExpenseList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFilter, setDateFilter] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [amountFilter, setAmountFilter] = useState({ min: "", max: "" });
+  // const [startDate, setStartDate] = useState(`${new Date(new Date().getFullYear(), new Date().getMonth(), 1)}`);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [expenseCategory, setExpenseCategory] = useState("");
+  const [expenseAmount, setAmountFilter] = useState({ min: "", max: "" });
   const [timePeriod, setTimePeriod] = useState("30"); // 30, 90, 365 days
+  const [expenses, setExpenses] = useState<Expense[]>([]);
 
-  // Mock data - updated with more recent dates for better demonstration
-  const [expenses] = useState<Expense[]>([
-    {
-      id: "1",
-      name: "Lunch at Italian Restaurant",
-      category: "Food & Dining",
-      subCategory: "Restaurants",
-      vendor: "Tony's Pizzeria",
-      date: "2024-12-15",
-      amount: 28.50,
-      type: "debit",
-      description: "Team lunch meeting",
-    },
-    {
-      id: "2",
-      name: "Gas Station Fill-up",
-      category: "Transportation",
-      subCategory: "Gas",
-      vendor: "Shell",
-      date: "2024-12-10",
-      amount: 45.20,
-      type: "debit",
-    },
-    {
-      id: "3",
-      name: "Grocery Shopping",
-      category: "Food & Dining",
-      subCategory: "Groceries",
-      vendor: "Whole Foods",
-      date: "2024-11-28",
-      amount: 127.85,
-      type: "debit",
-      description: "Weekly groceries",
-    },
-    {
-      id: "4",
-      name: "Cash Back Reward",
-      category: "Entertainment",
-      vendor: "Netflix",
-      date: "2024-10-12",
-      amount: 15.99,
-      type: "credit",
-      description: "Monthly subscription cashback",
-    },
-    {
-      id: "5",
-      name: "Coffee",
-      category: "Food & Dining",
-      subCategory: "Coffee",
-      vendor: "Starbucks",
-      date: "2024-08-11",
-      amount: 5.75,
-      type: "debit",
-    },
-    {
-      id: "6",
-      name: "Office Supplies",
-      category: "Office",
-      vendor: "Staples",
-      date: "2024-12-05",
-      amount: 89.99,
-      type: "debit",
-      description: "Printer paper and pens",
-    },
-    {
-      id: "7",
-      name: "Freelance Payment",
-      category: "Utilities",
-      vendor: "Client Inc",
-      date: "2024-11-01",
-      amount: 750.00,
-      type: "credit",
-      description: "Project payment received",
-    },
-  ]);
+  const [categories, setCategories] = useState([]);
 
-  const categories = ["Food & Dining", "Transportation", "Shopping", "Entertainment", "Utilities", "Healthcare", "Office", "Other"];
+  const fetchCategories = async () => {
+    try{
+      const res: any = await expenseService.fetchExpenseCategories();
+      console.log("res", res);
+      setCategories(res?.categories);
+    }catch(err){
+      console.error(err);
+    }
+  }
+
+  useEffect(() => { fetchCategories(); }, []);
+
+  const fetchExpenses = async () => {
+    try{
+      const res: any = await expenseService.fetchExpenses(searchTerm, startDate, endDate, expenseAmount.min, expenseAmount.max, expenseCategory);
+      console.log("expenseResponse", res);
+      setExpenses(res?.expenses);
+    }catch(err){
+      console.error(err);
+      console.error(err?.response?.data?.message);
+    }finally{
+    
+    }
+  }
+  // useEffect(() => { fetchExpenses(); }, [searchTerm, startDate, endDate, expenseAmount.min, expenseAmount.max, expenseCategory]);
+  useEffect(() => { fetchExpenses(); }, []);
+
+  // const categories = ["Food & Dining", "Transportation", "Shopping", "Entertainment", "Utilities", "Healthcare", "Office", "Other"];
 
   // Filter expenses for summary cards based on time period
   const getTimePeriodCutoff = () => {
@@ -116,42 +74,34 @@ const ExpenseList = () => {
     }
   };
 
-  const timePeriodExpenses = expenses.filter(expense => {
-    const expenseDate = new Date(expense.date);
-    const cutoffDate = getTimePeriodCutoff();
-    return isAfter(expenseDate, cutoffDate);
-  });
+  const timePeriodExpenses = expenses;
+  // const timePeriodExpenses = expenses.filter(expense => {
+  //   const expenseDate = new Date(expense.date);
+  //   const cutoffDate = getTimePeriodCutoff();
+  //   return isAfter(expenseDate, cutoffDate);
+  // });
 
   // Filter expenses for table display (existing filters)
-  const filteredExpenses = expenses.filter(expense => {
-    const matchesSearch = expense.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         expense.vendor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         expense.category.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredExpenses = expenses
+  // const filteredExpenses = expenses.filter(expense => {
+  //   const matchesSearch = expense.name.toLowerCase().includes(searchTerm.toLowerCase()) || expense.vendor.toLowerCase().includes(searchTerm.toLowerCase()) || expense.category.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesDate = !dateFilter || expense.date === dateFilter;
-    const matchesCategory = !categoryFilter || expense.category === categoryFilter;
-    const matchesAmount = (!amountFilter.min || expense.amount >= parseFloat(amountFilter.min)) &&
-                         (!amountFilter.max || expense.amount <= parseFloat(amountFilter.max));
+  //   const expenseDate = new Date(expense.date);
+  //   const matchesStartDate = !startDate || expenseDate >= new Date(startDate);
+  //   const matchesEndDate = !endDate || expenseDate >= new Date(endDate);
+  //   const matchesCategory = !expenseCategory || expense.category === expenseCategory;
+  //   const matchesAmount = (!expenseAmount.min || expense.amount >= parseFloat(expenseAmount.min)) && (!expenseAmount.max || expense.amount <= parseFloat(expenseAmount.max));
 
-    return matchesSearch && matchesDate && matchesCategory && matchesAmount;
-  });
+  //   return matchesSearch && matchesStartDate && matchesEndDate && matchesCategory && matchesAmount;
+  // });
 
   // Summary calculations based on time period
-  const summaryTotalAmount = timePeriodExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const summaryTotalAmount = timePeriodExpenses.reduce((sum, expense) => sum + expense.expenseAmount, 0);
+  const totalAmount = filteredExpenses.reduce((sum, expense) => sum + expense.expenseAmount, 0);
 
-  const totalAmount = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-
-  const handleEdit = (id: string) => {
-    console.log("Edit expense:", id);
-  };
-
-  const handleDelete = (id: string) => {
-    console.log("Delete expense:", id);
-  };
-
-  const handleExport = () => {
-    console.log("Export expenses");
-  };
+  const handleEdit = (id: string) => console.log("Edit expense:", id)
+  const handleDelete = (id: string) => console.log("Delete expense:", id);
+  const handleExport = () => console.log("Export expenses")
 
   return (
     <div className="min-h-screen bg-background">
@@ -167,7 +117,7 @@ const ExpenseList = () => {
         </div>
 
         {/* Time Period Selector */}
-        <div className="flex items-center justify-end mb-6">
+        {/* <div className="flex items-center justify-end mb-6">
           <div className="flex items-center space-x-4">
             <Clock className="w-12 text-primary" />
             <span className="text-lg font-medium text-foreground whitespace-nowrap !ml-2">Summary Period:</span>
@@ -181,10 +131,10 @@ const ExpenseList = () => {
               <option value="365">Last Year</option>
             </select>
           </div>
-        </div>
+        </div> */}
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="card bg-card shadow-card">
             <div className="card-body">
               <div className="flex items-center justify-between">
@@ -231,17 +181,23 @@ const ExpenseList = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Filters */}
         <div className="card bg-card shadow-card mb-6">
           <div className="card-body">
-            <div className="flex items-center space-x-4 mb-4">
-              <Filter className="w-5 h-5 text-primary" />
-              <h2 className="text-lg font-semibold">Filters</h2>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-4 mb-4">
+                <Filter className="w-5 h-5 text-primary" />
+                <h2 className="text-lg font-semibold">Filters</h2>
+              </div>
+              <button onClick={handleExport} className="btn btn-outline">
+                <Download className="w-4 h-4" />
+                CSV
+              </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
               {/* Search */}
               <div className="form-control">
                 <label className="label">
@@ -259,15 +215,28 @@ const ExpenseList = () => {
                 </div>
               </div>
 
-              {/* Date Filter */}
+              {/* Start Date Filter */}
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text">Date</span>
+                  <span className="label-text">Start Date</span>
                 </label>
                 <input
                   type="date"
-                  value={dateFilter}
-                  onChange={(e) => setDateFilter(e.target.value)}
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="input input-bordered w-full"
+                />
+              </div>
+
+              {/* End Date Filter */}
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">End Date</span>
+                </label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
                   className="input input-bordered w-full"
                 />
               </div>
@@ -278,13 +247,13 @@ const ExpenseList = () => {
                   <span className="label-text">Category</span>
                 </label>
                 <select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  value={expenseCategory}
+                  onChange={(e) => setExpenseCategory(e.target.value)}
                   className="select select-bordered w-full"
                 >
-                  <option value="">All Categories</option>
+                  <option value="">All</option>
                   {categories.map(category => (
-                    <option key={category} value={category}>{category}</option>
+                    <option key={category?._id} value={category?._id}>{category?.name}</option>
                   ))}
                 </select>
               </div>
@@ -297,8 +266,8 @@ const ExpenseList = () => {
                 <input
                   type="number"
                   placeholder="$0"
-                  value={amountFilter.min}
-                  onChange={(e) => setAmountFilter({...amountFilter, min: e.target.value})}
+                  value={expenseAmount.min}
+                  onChange={(e) => setAmountFilter({...expenseAmount, min: e.target.value})}
                   className="input input-bordered w-full"
                   min="0"
                   step="0.01"
@@ -312,8 +281,8 @@ const ExpenseList = () => {
                 <input
                   type="number"
                   placeholder="$999"
-                  value={amountFilter.max}
-                  onChange={(e) => setAmountFilter({...amountFilter, max: e.target.value})}
+                  value={expenseAmount.max}
+                  onChange={(e) => setAmountFilter({...expenseAmount, max: e.target.value})}
                   className="input input-bordered w-full"
                   min="0"
                   step="0.01"
@@ -321,10 +290,22 @@ const ExpenseList = () => {
               </div>
             </div>
 
-            <div className="flex justify-end mt-4">
-              <button onClick={handleExport} className="btn btn-outline">
-                <Download className="w-4 h-4" />
-                Export CSV
+            {/* Filter Action Buttons */}
+            <div className="flex justify-end space-x-3 mt-4">
+              <button
+                onClick={() => {
+                  // setSearchTerm("");
+                  // setStartDate("");
+                  // setEndDate("");
+                  // setCategoryFilter("");
+                  // setAmountFilter({ min: "", max: "" });
+                }}
+                className="btn btn-outline"
+              >
+                Clear Filters
+              </button>
+              <button className="btn btn-primary" onClick={fetchExpenses}>
+                Apply Filters
               </button>
             </div>
           </div>
@@ -337,9 +318,10 @@ const ExpenseList = () => {
               <table className="table table-zebra w-full">
                 <thead>
                   <tr>
+                    <th className="!pr-0">#</th>
                     <th>Expense Name</th>
                     <th>Category</th>
-                    <th>Vendor</th>
+                    {/* <th>Vendor</th> */}
                     <th>Date</th>
                     <th>Amount</th>
                     <th>Description</th>
@@ -347,40 +329,43 @@ const ExpenseList = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredExpenses.map((expense) => (
-                    <tr key={expense.id}>
+                  {filteredExpenses.map((curElem, i) => (
+                    <tr key={curElem._id}>
+                      <td className="!pr-0">{i + 1}</td>
                       <td>
-                        <div className="font-medium">{expense.name}</div>
-                        {expense.subCategory && (
-                          <div className="text-sm text-muted-foreground">{expense.subCategory}</div>
+                        <div className="font-medium">{curElem.title}</div>
+                        {curElem.subCategory && (
+                          <div className="text-sm text-muted-foreground">{curElem.subCategory}</div>
                         )}
                       </td>
                       <td>
-                        <span className="badge badge-outline">{expense.category}</span>
+                        <span className="badge badge-outline">{curElem.expenseCategory?.name}</span>
                       </td>
-                      <td>{expense.vendor}</td>
-                      <td>{new Date(expense.date).toLocaleDateString()}</td>
+                      {/* <td>{curElem.vendor}</td> */}
+                      <td>{new Date(curElem.expenseDate).toLocaleDateString('en-IN', { dateStyle: "medium" })}</td>
                       <td>
-                        <span className={`font-semibold px-2 py-1 rounded text-sm ${
-                          expense.type === "credit" 
+                        <span className={`font-semibold px-2 py-1 rounded text-sm whitespace-nowrap ${
+                          curElem.transactionType === "credit" 
                             ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" 
                             : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
                         }`}>
-                          {expense.type === "credit" ? "+" : "-"}${expense.amount.toFixed(2)}
+                          {curElem.transactionType === "credit" ? "+" : "-"} ₹{curElem.expenseAmount}
                         </span>
                       </td>
-                      <td className="max-w-xs truncate">{expense.description || "-"}</td>
+                      <td className="max-w-xs truncate">
+                        <p className={`line-clamp-1`}>{curElem?.expenseDescription || "-"}</p>
+                      </td>
                       <td>
                         <div className="flex space-x-2">
                           <button
-                            onClick={() => handleEdit(expense.id)}
+                            onClick={() => handleEdit(curElem._id)}
                             className="btn btn-sm btn-ghost"
                             title="Edit"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDelete(expense.id)}
+                            onClick={() => handleDelete(curElem._id)}
                             className="btn btn-sm btn-ghost text-error"
                             title="Delete"
                           >

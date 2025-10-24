@@ -1,7 +1,7 @@
 import api from '@/lib/axios';
 
 export interface LoginCredentials {
-  emailOrUsername: string;
+  username: string;
   password: string;
   rememberMe?: boolean;
 }
@@ -31,7 +31,7 @@ export interface AuthResponse {
 export const authService = {
   // Login API call
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
-    const response = await api.post('/auth/login', credentials);
+    const response = await api.post('/users/login', credentials);
     return response.data;
   },
 

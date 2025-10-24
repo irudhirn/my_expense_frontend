@@ -2,22 +2,23 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Wallet, LogIn } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
+  const { toast } = useToast();
   const navigate = useNavigate();
   const { login, isLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    emailOrUsername: "",
+    username: "",
     password: "",
-    rememberMe: false,
+    // rememberMe: false,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await login(formData);
-      navigate('/'); // Redirect to home after successful login
     } catch (error) {
       // Error is handled in AuthContext
     }
@@ -50,8 +51,8 @@ const Login = () => {
               </label>
               <input
                 type="text"
-                name="emailOrUsername"
-                value={formData.emailOrUsername}
+                name="username"
+                value={formData.username}
                 onChange={handleChange}
                 className="input input-bordered w-full"
                 placeholder="Enter your email or username"
@@ -88,7 +89,7 @@ const Login = () => {
             </div>
 
             <div className="flex items-center justify-between">
-              <label className="flex items-center">
+              {/* <label className="flex items-center">
                 <input 
                   type="checkbox" 
                   name="rememberMe"
@@ -97,7 +98,7 @@ const Login = () => {
                   className="checkbox checkbox-sm" 
                 />
                 <span className="label-text ml-2">Remember me</span>
-              </label>
+              </label> */}
               <Link to="/forgot-password" className="link link-primary text-sm">
                 Forgot password?
               </Link>
