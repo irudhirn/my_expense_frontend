@@ -16,7 +16,7 @@ const useAuthStore = create<AuthStore>()(persist((set) => ({
 }),
   {
     name: 'token', // name of the item in the storage (must be unique)
-    storage: createJSONStorage(() => sessionStorage)
+    storage: createJSONStorage(() => localStorage)
   }
 ));
 

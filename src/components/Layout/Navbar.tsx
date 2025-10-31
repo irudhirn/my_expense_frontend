@@ -1,16 +1,23 @@
 import { Link, useLocation } from "react-router-dom";
 import { Wallet, User, Plus, List, LogOut } from "lucide-react";
+import useAuthStore from "@/stores/useAuthStore";
+import useUserStore from "@/stores/useUserStore";
 
 const Navbar = () => {
+  const { setToken } = useAuthStore();
+  const { setUser: setUserData } = useUserStore();
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userData");
-    sessionStorage.removeItem("token");
-    sessionStorage.removeItem("userData");
+    // localStorage.removeItem("token");
+    // localStorage.removeItem("userData");
+    // sessionStorage.removeItem("token");
+    // sessionStorage.removeItem("userData");
+    setToken(null);
+    setUserData(null);
+    window.location.reload();
   }
 
   return (

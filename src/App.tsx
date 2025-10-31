@@ -25,7 +25,8 @@ axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
 
 const App = () => {
   axios.interceptors.request.use((request) => {
-    const token = localStorage.getItem("token");
+    const token = JSON.parse(localStorage.getItem("token"))?.state?.token;
+    console.log(token);
 
     if(token) request.headers.Authorization = "Bearer " + token;
     
