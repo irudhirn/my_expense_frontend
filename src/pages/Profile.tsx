@@ -1,18 +1,22 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Eye, EyeOff, Camera, Save, User } from "lucide-react";
 import Navbar from "../components/Layout/Navbar";
+import useUserStore from "@/stores/useUserStore";
 
 const Profile = () => {
+  const { user: userData } = useUserStore();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: "John",
-    lastName: "Doe",
-    username: "johndoe",
-    email: "john@example.com",
+    firstName: "",
+    lastName: "",
+    username: "",
+    email: "",
     password: "",
     confirmPassword: "",
   });
+
+  useEffect(() => { setFormData((prev) => ({ ...prev, firstName: userData?.firstName || "", lastName: userData?.lastName || "", username: userData?.username || "", email: userData?.email || "" })); }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,7 +145,7 @@ const Profile = () => {
                       readOnly
                     />
                     <label className="label">
-                      <span className="label-text-alt text-muted-foreground">
+                      <span className="label-text-alt text-muted-foreground text-xs">
                         Email cannot be changed
                       </span>
                     </label>

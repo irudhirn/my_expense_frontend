@@ -42,9 +42,18 @@ const ExpenseList = () => {
 
   useEffect(() => { fetchCategories(); }, []);
 
-  const fetchExpenses = async () => {
+  const fetchExpenses = async (clear = false) => {
+
+    const search = clear ? "" : searchTerm;
+    const start = clear ? "" : startDate;
+    const end = clear ? "" : endDate;
+    const min = clear ? "" : expenseAmount.min;
+    const max = clear ? "" : expenseAmount.max;
+    const cat = clear ? "" : expenseCategory;
+    
+
     try{
-      const res: any = await expenseService.fetchExpenses(searchTerm, startDate, endDate, expenseAmount.min, expenseAmount.max, expenseCategory);
+      const res: any = await expenseService.fetchExpenses(search, start, end, min, max, cat);
       console.log("expenseResponse", res);
       setExpenses(res?.expenses);
     }catch(err){
@@ -294,17 +303,18 @@ const ExpenseList = () => {
             <div className="flex justify-end space-x-3 mt-4">
               <button
                 onClick={() => {
-                  // setSearchTerm("");
-                  // setStartDate("");
-                  // setEndDate("");
+                  setSearchTerm("");
+                  setStartDate("");
+                  setEndDate("");
                   // setCategoryFilter("");
-                  // setAmountFilter({ min: "", max: "" });
+                  setAmountFilter({ min: "", max: "" });
+                  setTimeout(() => { fetchExpenses(true); }, 100);
                 }}
                 className="btn btn-outline"
               >
                 Clear Filters
               </button>
-              <button className="btn btn-primary" onClick={fetchExpenses}>
+              <button className="btn btn-primary" onClick={() => fetchExpenses()}>
                 Apply Filters
               </button>
             </div>
@@ -380,7 +390,7 @@ const ExpenseList = () => {
 
               {filteredExpenses.length === 0 && (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground">No expenses found matching your criteria.</p>
+                  <p className="text-muted-foreground">No expenses found in this month matching your criteria.</p>
                 </div>
               )}
             </div>
