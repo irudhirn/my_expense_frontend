@@ -16,24 +16,27 @@ import Profile from "./pages/Profile";
 import AddExpense from "./pages/AddExpense";
 import ExpenseList from "./pages/ExpenseList";
 import NotFound from "./pages/NotFound";
-import axios from "axios";
+// import axios from "axios";
+import { axiosInstance as axios } from "./utils/globalVars";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
-axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
+// axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
 
 const App = () => {
-  axios.interceptors.request.use((request) => {
-    const token = JSON.parse(localStorage.getItem("token"))?.state?.token;
-    console.log(token);
+  // axios.interceptors.request.use((request) => {
+  //   // const token = JSON.parse(localStorage.getItem("token"))?.state?.token;
+  //   // const token = JSON.parse(localStorage.getItem("accessToken"))?.state?.accessToken;
+  //   const token = JSON.parse(localStorage.getItem("accessToken"));
+  //   // console.log("token", token);
 
-    if(token) request.headers.Authorization = "Bearer " + token;
+  //   if(token) request.headers.Authorization = "Bearer " + token;
     
-    return request;
-  }, (err) => {
-    return Promise.reject(err);
-  })
+  //   return request;
+  // }, (err) => {
+  //   return Promise.reject(err);
+  // })
 
   return (
     <QueryClientProvider client={queryClient}>

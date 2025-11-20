@@ -1,120 +1,181 @@
-import { useEffect, useState } from "react";
-import { Save, Upload, Plus, Calendar } from "lucide-react";
-import Navbar from "../components/Layout/Navbar";
-import { expenseService } from "@/services/expenseService";
-import { toast } from "@/hooks/use-toast";
+import React, { useEffect, useState } from 'react';
+import { Search, Filter, Download, Edit, Trash2, List, Calendar, DollarSign, Clock, LogIn, Save, Upload } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { expenseService } from '@/services/expenseService';
 
-const AddExpense = () => {
-  const [categories, setCategories] = useState([]);
-  const [formData, setFormData] = useState({
+type ExpenseFormData = {
+  _id: string;
+  title: string;
+  expenseCategory: string;
+  expenseSubCategory: string;
+  vendor: string;
+  expenseDate: string;
+  expenseAmount: number;
+  transactionType: string;
+  expenseDescription: string;
+}
+
+type Expense = {
+  _id: string;
+  title: string;
+  expenseCategory: { _id: string, name: string };
+  subCategory?: string;
+  vendor?: string;
+  expenseDate: string;
+  expenseAmount: number;
+  transactionType: "credit" | "debit";
+  expenseDescription?: string;
+  receipt?: string;
+}
+
+interface ExpenseProps {
+  i: number;
+  curElem: Expense;
+  categories: any;
+  handleDeleteCurExpense: (expense: Expense) => void;
+}
+
+const Expense: React.FC<ExpenseProps> = ({ i, curElem, categories, handleDeleteCurExpense }) => {
+  const [showEditExpense, setShowEditExpense] = useState(false);
+  const [expense, setExpense] = useState<Expense | undefined>();
+  const [curExpense, setCurExpense] = useState<ExpenseFormData>({
+    _id: "",
     title: "",
     expenseCategory: "",
     expenseSubCategory: "",
     vendor: "",
     expenseDate: "",
-    expenseAmount: "",
+    expenseAmount: 0,
     transactionType: "",
     expenseDescription: "",
   });
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  useEffect(() => {
+    if(!expense) setExpense(curElem);
+  }, [curElem]);
 
-  // const categories = [
-  //   { value: "food", label: "Food & Dining", subCategories: ["Restaurants", "Groceries", "Fast Food", "Coffee"] },
-  //   { value: "transportation", label: "Transportation", subCategories: ["Gas", "Public Transit", "Ride Share", "Parking"] },
-  //   { value: "shopping", label: "Shopping", subCategories: ["Clothing", "Electronics", "Home & Garden", "Personal Care"] },
-  //   { value: "entertainment", label: "Entertainment", subCategories: ["Movies", "Concerts", "Games", "Books"] },
-  //   { value: "utilities", label: "Utilities", subCategories: ["Electricity", "Water", "Internet", "Phone"] },
-  //   { value: "healthcare", label: "Healthcare", subCategories: ["Doctor", "Pharmacy", "Insurance", "Dental"] },
-  //   { value: "other", label: "Other", subCategories: ["Miscellaneous"] },
-  // ];
+  const getCurrentCategory = () => categories.find(cat => cat.value === curExpense.expenseCategory);
 
-  const fetchCategories = async () => {
-    try{
-      const res: any = await expenseService.fetchExpenseCategories();
-      console.log("res", res);
-      setCategories(res?.categories?.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase())));
-    }catch(err){
-      console.error(err);
+  function toLocalDateString(date: string | Date | null | undefined): string {
+    // const tzOffsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    // return tzOffsetDate.toISOString().slice(0, 10);
+
+    if (!date) return ""; // or return some default
+
+    const d = typeof date === "string" ? new Date(date) : date;
+
+    if (isNaN(d.getTime())) {
+      console.warn("Invalid date:", date);
+      return "";
     }
+
+    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 10);
   }
 
-  useEffect(() => { fetchCategories(); }, []);
-
-  const getCurrentCategory = () => categories.find(cat => cat.value === formData.expenseCategory);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const tempObj = { ...formData };
-
-    for (const key in tempObj) {
-      if(!tempObj[key]?.trim()) delete tempObj[key]
-    }
-
-    try{
-      const res = await expenseService.addExpense(tempObj);
-
-      toast({
-        title: "Expense saved successfully!",
-        description: "",
-      });
-    }catch(err){
-      console.error(err);
-    }
-
-    // Handle expense submission logic here
-    console.log("Expense submitted:", { ...formData, receipt: selectedFile });
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-      // Reset sub-category when category changes
-      ...(name === "category" && { subCategory: "" }),
-    });
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-    }
-  };
-
-  const resetForm = () => {
-    setFormData((prev) => ({
-      ...prev,
-      title: "",
-      expenseCategory: "",
+  function handleEditCurExpense(expense: Expense){
+    let tempExpense: ExpenseFormData = {
+      _id: expense?._id,
+      title: expense?.title,
+      expenseCategory: expense?.expenseCategory?._id,
       expenseSubCategory: "",
       vendor: "",
-      expenseDate: "",
-      expenseAmount: "",
-      transactionType: "",
-      expenseDescription: "",
-    }));
+      expenseDate: toLocalDateString(expense?.expenseDate),
+      expenseAmount: expense?.expenseAmount,
+      transactionType: expense?.transactionType,
+      expenseDescription: expense?.expenseDescription,
+    }
+    setCurExpense(tempExpense);
+    setShowEditExpense(true);
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
-          <div className="card bg-card shadow-elevated">
-            <div className="card-body">
-              <div className="flex items-center space-x-4 mb-8">
-                <Plus className="w-8 h-8 text-primary" />
-                <div>
-                  <h1 className="text-3xl font-bold text-foreground">Add New Expense</h1>
-                  <p className="text-muted-foreground">Record your expense details</p>
-                </div>
-              </div>
+  const handleEditExpense = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
-              <form onSubmit={handleSubmit} className="space-y-6 text-left">
+    try{
+      const res = await expenseService.updateExpense(curExpense);
+      console.log("handleEditExpense", res);
+      setExpense(res?.data?.data?.expense);
+      setShowEditExpense(false);
+    }catch(err){
+      console.error(err);
+    }finally{
+    
+    }
+  }
+
+  const handleChangeExpense = (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement> | React.ChangeEvent<HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setCurExpense((prev) => ({ ...prev, [name]: value?.trim() }));
+  }
+  
+  const resetForm = () => {
+    
+  }
+
+  const handleDelete = (id: string) => console.log("Delete expense:", id);
+
+  return (
+    <>
+      {expense && (
+        <tr>
+          <td className="!pr-0">{i + 1}</td>
+          <td>
+            <div className="font-medium">{expense.title}</div>
+            {expense.subCategory && (
+              <div className="text-sm text-muted-foreground">{expense.subCategory}</div>
+            )}
+          </td>
+          <td>
+            <span className="badge badge-outline">{expense.expenseCategory?.name}</span>
+          </td>
+          {/* <td>{expense.vendor}</td> */}
+          <td>{new Date(expense.expenseDate).toLocaleDateString('en-IN', { dateStyle: "medium" })}</td>
+          <td>
+            <span className={`font-semibold px-2 py-1 rounded text-sm whitespace-nowrap ${
+              expense.transactionType === "credit" 
+                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" 
+                : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+            }`}>
+              {expense.transactionType === "credit" ? "+" : "-"} ₹{expense.expenseAmount}
+            </span>
+          </td>
+          <td className="max-w-xs truncate">
+            <p className={`line-clamp-1`}>{expense?.expenseDescription || "-"}</p>
+          </td>
+          <td>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => { handleEditCurExpense(expense); }}
+                className="btn btn-sm btn-ghost"
+                title="Edit"
+              >
+                <Edit className="w-4 h-4" />
+              </button>
+              <button
+                // onClick={() => handleDelete(expense._id)}
+                onClick={() => handleDeleteCurExpense(expense)}
+                className="btn btn-sm btn-ghost text-error"
+                title="Delete"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </td>
+        </tr>
+      )}
+
+      <Dialog open={showEditExpense} onOpenChange={setShowEditExpense}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-2xl font-bold">
+              Edit Expense
+            </DialogTitle>
+          </DialogHeader>
+
+          {curExpense && (
+            <div className="text-left space-y-6 mt-4 text-sm">
+              <form onSubmit={handleEditExpense} className="space-y-6">
                 {/* Expense Name */}
                 <div className="form-control">
                   <label className="label">
@@ -123,8 +184,8 @@ const AddExpense = () => {
                   <input
                     type="text"
                     name="title"
-                    value={formData.title}
-                    onChange={handleChange}
+                    value={curExpense?.title}
+                    onChange={handleChangeExpense}
                     className="input input-bordered w-full"
                     placeholder="e.g., Lunch at Restaurant"
                     required
@@ -139,8 +200,8 @@ const AddExpense = () => {
                     </label>
                     <select
                       name="expenseCategory"
-                      value={formData.expenseCategory}
-                      onChange={handleChange}
+                      value={curExpense.expenseCategory}
+                      onChange={handleChangeExpense}
                       className="select select-bordered w-full"
                       required
                     >
@@ -159,10 +220,10 @@ const AddExpense = () => {
                     </label>
                     <select
                       name="expenseSubCategory"
-                      value={formData.expenseSubCategory}
-                      onChange={handleChange}
+                      value={curExpense.expenseSubCategory}
+                      onChange={handleChangeExpense}
                       className="select select-bordered w-full"
-                      disabled={!formData.expenseCategory}
+                      // disabled={!curExpense.expenseCategory}
                     >
                       <option value="">Select Sub-category</option>
                       {getCurrentCategory()?.subCategories.map(subCat => (
@@ -183,8 +244,8 @@ const AddExpense = () => {
                     <input
                       type="text"
                       name="vendor"
-                      value={formData.vendor}
-                      onChange={handleChange}
+                      value={curExpense.vendor}
+                      onChange={handleChangeExpense}
                       className="input input-bordered w-full"
                       placeholder="e.g., Starbucks"
                       // required
@@ -199,8 +260,9 @@ const AddExpense = () => {
                       <input
                         type="date"
                         name="expenseDate"
-                        value={formData.expenseDate}
-                        onChange={handleChange}
+                        value={curExpense.expenseDate}
+                        onChange={handleChangeExpense}
+                        // onChange={(e) => console.log(e.target.value)}
                         className="input input-bordered w-full"
                         required
                       />
@@ -220,8 +282,8 @@ const AddExpense = () => {
                       <input
                         type="number"
                         name="expenseAmount"
-                        value={formData.expenseAmount}
-                        onChange={handleChange}
+                        value={curExpense.expenseAmount}
+                        onChange={handleChangeExpense}
                         className="input input-bordered w-full pl-8"
                         placeholder="0.00"
                         step="0.01"
@@ -237,8 +299,8 @@ const AddExpense = () => {
                     </label>
                     <select
                       name="transactionType"
-                      value={formData.transactionType}
-                      onChange={handleChange}
+                      value={curExpense.transactionType}
+                      onChange={handleChangeExpense}
                       className="select select-bordered w-full"
                       required
                     >
@@ -256,8 +318,8 @@ const AddExpense = () => {
                   </label>
                   <textarea
                     name="expenseDescription"
-                    value={formData.expenseDescription}
-                    onChange={handleChange}
+                    value={curExpense.expenseDescription}
+                    onChange={handleChangeExpense}
                     className="textarea textarea-bordered w-full"
                     placeholder="Optional notes about this expense..."
                     rows={3}
@@ -273,18 +335,18 @@ const AddExpense = () => {
                     <input
                       type="file"
                       accept="image/*,.pdf"
-                      onChange={handleFileChange}
+                      // onChange={handleFileChange}
                       className="file-input file-input-bordered w-full"
                     />
                     <Upload className="w-5 h-5 text-muted-foreground" />
                   </div>
-                  {selectedFile && (
+                  {/* {selectedFile && (
                     <div className="mt-2 p-3 bg-muted rounded-lg">
                       <p className="text-sm text-foreground">
                         Selected: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
                       </p>
                     </div>
-                  )}
+                  )} */}
                   <label className="label">
                     <span className="label-text-alt text-muted-foreground">
                       Upload receipt or invoice (JPG, PNG, PDF, max 10MB)
@@ -300,16 +362,26 @@ const AddExpense = () => {
                   </button>
                   <button type="submit" className="btn btn-primary btn-lg">
                     <Save className="w-5 h-5" />
-                    Save Expense
+                    Update
                   </button>
                 </div>
               </form>
+              
+              {/* <Button
+                type="submit"
+                className="w-full"
+                size="lg"
+              >
+                <LogIn className="w-4 h-4 mr-2" />
+                Edit
+              </Button> */}
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+          )}
+        </DialogContent>
+      </Dialog>
 
-export default AddExpense;
+    </>
+  )
+}
+
+export default Expense;

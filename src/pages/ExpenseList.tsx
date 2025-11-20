@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
-import { Search, Filter, Download, Edit, Trash2, List, Calendar, DollarSign, Clock } from "lucide-react";
+import { Search, Filter, Download, Edit, Trash2, List, Calendar, DollarSign, Clock, LogIn, Save, Upload } from "lucide-react";
 import { subDays, subMonths, subYears, isAfter } from "date-fns";
 import Navbar from "../components/Layout/Navbar";
 import { expenseService } from "@/services/expenseService";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import ExpenseRow from "@/components/ExpenseList/Expense";
+import { toast } from '@/hooks/use-toast';
 
 interface Expense {
   _id: string;
@@ -17,6 +21,18 @@ interface Expense {
   receipt?: string;
 }
 
+interface ExpenseFormData {
+  _id: string;
+  title: string;
+  expenseCategory: string;
+  expenseSubCategory: string;
+  vendor: string;
+  expenseDate: string;
+  expenseAmount: number;
+  transactionType: string;
+  expenseDescription: string;
+}
+
 const ExpenseList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFilter, setDateFilter] = useState("");
@@ -27,20 +43,47 @@ const ExpenseList = () => {
   const [expenseAmount, setAmountFilter] = useState({ min: "", max: "" });
   const [timePeriod, setTimePeriod] = useState("30"); // 30, 90, 365 days
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  
+  const [showDeleteExpense, setShowDeleteExpense] = useState(false);
+  const [curExpense, setCurExpense] = useState<ExpenseFormData>({
+    _id: "",
+    title: "",
+    expenseCategory: "",
+    expenseSubCategory: "",
+    vendor: "",
+    expenseDate: "",
+    expenseAmount: 0,
+    transactionType: "",
+    expenseDescription: "",
+  });
+
+  const resetCurExpense = () => setCurExpense({
+        _id: "",
+        title: "",
+        expenseCategory: "",
+        expenseSubCategory: "",
+        vendor: "",
+        expenseDate: "",
+        expenseAmount: 0,
+        transactionType: "",
+        expenseDescription: "",
+      });
 
   const [categories, setCategories] = useState([]);
 
   const fetchCategories = async () => {
     try{
       const res: any = await expenseService.fetchExpenseCategories();
-      console.log("res", res);
-      setCategories(res?.categories);
+      // console.log("res", res);
+      setCategories(res?.categories?.sort((a, b) => (a.name?.toLowerCase()?.localeCompare(b?.name?.toLowerCase()))));
     }catch(err){
       console.error(err);
     }
   }
 
   useEffect(() => { fetchCategories(); }, []);
+
+  const getCurrentCategory = () => categories.find(cat => cat.value === curExpense.expenseCategory);
 
   const fetchExpenses = async (clear = false) => {
 
@@ -54,11 +97,16 @@ const ExpenseList = () => {
 
     try{
       const res: any = await expenseService.fetchExpenses(search, start, end, min, max, cat);
-      console.log("expenseResponse", res);
+      // console.log("expenseResponse", res);
       setExpenses(res?.expenses);
     }catch(err){
       console.error(err);
-      console.error(err?.response?.data?.message);
+      console.log("", Date.now());
+      toast({
+        title: err?.response?.data?.message || "Something went wrong.",
+        description: "",
+        variant: "destructive",
+      });
     }finally{
     
     }
@@ -91,7 +139,7 @@ const ExpenseList = () => {
   // });
 
   // Filter expenses for table display (existing filters)
-  const filteredExpenses = expenses
+  const filteredExpenses = expenses;
   // const filteredExpenses = expenses.filter(expense => {
   //   const matchesSearch = expense.name.toLowerCase().includes(searchTerm.toLowerCase()) || expense.vendor.toLowerCase().includes(searchTerm.toLowerCase()) || expense.category.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -105,12 +153,83 @@ const ExpenseList = () => {
   // });
 
   // Summary calculations based on time period
-  const summaryTotalAmount = timePeriodExpenses.reduce((sum, expense) => sum + expense.expenseAmount, 0);
-  const totalAmount = filteredExpenses.reduce((sum, expense) => sum + expense.expenseAmount, 0);
+  // const summaryTotalAmount = timePeriodExpenses.reduce((sum, expense) => sum + expense.expenseAmount, 0);
+  // const totalAmount = filteredExpenses.reduce((sum, expense) => sum + expense.expenseAmount, 0);
 
-  const handleEdit = (id: string) => console.log("Edit expense:", id)
-  const handleDelete = (id: string) => console.log("Delete expense:", id);
-  const handleExport = () => console.log("Export expenses")
+  function toLocalDateString(date: string | Date | null | undefined): string {
+    // const tzOffsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    // return tzOffsetDate.toISOString().slice(0, 10);
+
+    if (!date) return ""; // or return some default
+
+    const d = typeof date === "string" ? new Date(date) : date;
+
+    if (isNaN(d.getTime())) {
+      console.warn("Invalid date:", date);
+      return "";
+    }
+
+    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 10);
+  }
+
+  function handleCurExpense(expense: Expense){
+    let tempExpense: ExpenseFormData = {
+      _id: expense?._id,
+      title: expense?.title,
+      expenseCategory: expense?.expenseCategory?._id,
+      expenseSubCategory: "",
+      vendor: "",
+      expenseDate: toLocalDateString(expense?.expenseDate),
+      expenseAmount: expense?.expenseAmount,
+      transactionType: expense?.transactionType,
+      expenseDescription: expense?.expenseDescription,
+    }
+    setCurExpense(tempExpense);
+    setShowDeleteExpense(true);
+  }
+
+  const handleEditExpense = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    try{
+      const res = await expenseService.updateExpense(curExpense);
+      console.log("handleEditExpense", res);
+    }catch(err){
+      console.error(err);
+    }finally{
+    
+    }
+  }
+  const handleChangeExpense = (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement> | React.ChangeEvent<HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setCurExpense((prev) => ({ ...prev, [name]: value?.trim() }));
+  }
+  const resetForm = () => {
+    
+  }
+  
+  const [deleting, setDeleting] = useState(false);
+  const handleDeleteExpense = async () => {
+    try{
+      const res = await expenseService.deleteExpense(curExpense?._id);
+      console.log("handleDeleteExpense", res);
+      setExpenses((prev) => (prev.filter((el) => el?._id !== curExpense?._id)));
+      resetCurExpense();
+      setShowDeleteExpense(false);
+    }catch(err){
+      console.error(err);
+      toast({
+        title: err?.response?.data?.message || "Something went wrong.",
+        description: "",
+        variant: "destructive",
+      });
+    }finally{
+    
+    }
+  };
+
+  const handleExport = () => console.log("Export expenses");
 
   return (
     <div className="min-h-screen bg-background">
@@ -261,7 +380,7 @@ const ExpenseList = () => {
                   className="select select-bordered w-full"
                 >
                   <option value="">All</option>
-                  {categories.map(category => (
+                  {categories && categories.map(category => (
                     <option key={category?._id} value={category?._id}>{category?.name}</option>
                   ))}
                 </select>
@@ -339,56 +458,13 @@ const ExpenseList = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredExpenses.map((curElem, i) => (
-                    <tr key={curElem._id}>
-                      <td className="!pr-0">{i + 1}</td>
-                      <td>
-                        <div className="font-medium">{curElem.title}</div>
-                        {curElem.subCategory && (
-                          <div className="text-sm text-muted-foreground">{curElem.subCategory}</div>
-                        )}
-                      </td>
-                      <td>
-                        <span className="badge badge-outline">{curElem.expenseCategory?.name}</span>
-                      </td>
-                      {/* <td>{curElem.vendor}</td> */}
-                      <td>{new Date(curElem.expenseDate).toLocaleDateString('en-IN', { dateStyle: "medium" })}</td>
-                      <td>
-                        <span className={`font-semibold px-2 py-1 rounded text-sm whitespace-nowrap ${
-                          curElem.transactionType === "credit" 
-                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" 
-                            : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
-                        }`}>
-                          {curElem.transactionType === "credit" ? "+" : "-"} ₹{curElem.expenseAmount}
-                        </span>
-                      </td>
-                      <td className="max-w-xs truncate">
-                        <p className={`line-clamp-1`}>{curElem?.expenseDescription || "-"}</p>
-                      </td>
-                      <td>
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleEdit(curElem._id)}
-                            className="btn btn-sm btn-ghost"
-                            title="Edit"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(curElem._id)}
-                            className="btn btn-sm btn-ghost text-error"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                  {filteredExpenses && filteredExpenses.map((curElem, i) => (
+                    <ExpenseRow key={curElem?._id} i={i} curElem={curElem} categories={categories} handleDeleteCurExpense={handleCurExpense} />
                   ))}
                 </tbody>
               </table>
 
-              {filteredExpenses.length === 0 && (
+              {filteredExpenses && filteredExpenses.length === 0 && (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">No expenses found in this month matching your criteria.</p>
                 </div>
@@ -397,8 +473,94 @@ const ExpenseList = () => {
           </div>
         </div>
       </div>
+
+      <Dialog open={showDeleteExpense} onOpenChange={setShowDeleteExpense}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-left text-2xl font-bold">
+              {/* Delete Expense */}Confirm
+            </DialogTitle>
+          </DialogHeader>
+
+          {curExpense && (
+            <div className="text-left space-y-1 mt-2 text-sm">
+              {/* <form onSubmit={handleDeleteExpense} className="space-y-6"> */}
+              <div className="space-y-4">
+                <p className="text-muted-foreground text-lg mb-8">
+                  Are you sure delete this record?
+                </p>
+                
+                <div className={`text-right`}>
+                  <button 
+                    onClick={() => { setShowDeleteExpense(false); resetCurExpense(); }}
+                    className="btn btn-outline" 
+                  >
+                    Cancel
+                  </button>&nbsp;&nbsp;
+                  <button 
+                    onClick={handleDeleteExpense}
+                    className="btn btn-primary"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
 export default ExpenseList;
+
+/*
+
+<tr key={curElem._id}>
+  <td className="!pr-0">{i + 1}</td>
+  <td>
+    <div className="font-medium">{curElem.title}</div>
+    {curElem.subCategory && (
+      <div className="text-sm text-muted-foreground">{curElem.subCategory}</div>
+    )}
+  </td>
+  <td>
+    <span className="badge badge-outline">{curElem.expenseCategory?.name}</span>
+  </td>
+  // <td>{curElem.vendor}</td>
+  <td>{new Date(curElem.expenseDate).toLocaleDateString('en-IN', { dateStyle: "medium" })}</td>
+  <td>
+    <span className={`font-semibold px-2 py-1 rounded text-sm whitespace-nowrap ${
+      curElem.transactionType === "credit" 
+        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" 
+        : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+    }`}>
+      {curElem.transactionType === "credit" ? "+" : "-"} ₹{curElem.expenseAmount}
+    </span>
+  </td>
+  <td className="max-w-xs truncate">
+    <p className={`line-clamp-1`}>{curElem?.expenseDescription || "-"}</p>
+  </td>
+  <td>
+    <div className="flex space-x-2">
+      <button
+        onClick={() => { handleCurExpense(curElem); }}
+        className="btn btn-sm btn-ghost"
+        title="Edit"
+      >
+        <Edit className="w-4 h-4" />
+      </button>
+      <button
+        onClick={() => handleDelete(curElem._id)}
+        className="btn btn-sm btn-ghost text-error"
+        title="Delete"
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
+    </div>
+  </td>
+</tr>
+
+*/

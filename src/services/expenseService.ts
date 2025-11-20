@@ -1,4 +1,5 @@
-import axios from "axios"
+// import axios from "axios";
+import { axiosInstance as axios } from "@/utils/globalVars";
 
 export const expenseService = {
   fetchExpenses: async (search: string = "", startDate: string | null = null, endDate: string | null = null, minAmount: string | null = null, maxAmount: string | null = null, expenseCategory: string | null = null) => {
@@ -22,5 +23,15 @@ export const expenseService = {
 
   addExpense: async (data) => {
     const res = await axios.post(`/expenses`, data);
+  },
+
+  updateExpense: async (data) => {
+    const res = await axios.put(`expenses/${data?._id}`, data);
+    return res;
+  },
+
+  deleteExpense: async (id: string) => {
+    const res = await axios.delete(`expenses/${id}`);
+    return res;
   }
 }

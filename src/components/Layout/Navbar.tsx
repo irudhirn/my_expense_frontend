@@ -15,6 +15,7 @@ const Navbar = () => {
     // localStorage.removeItem("userData");
     // sessionStorage.removeItem("token");
     // sessionStorage.removeItem("userData");
+    localStorage.removeItem("accessToken");
     setToken(null);
     setUserData(null);
     window.location.reload();

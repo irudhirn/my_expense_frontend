@@ -3,17 +3,55 @@ import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Wallet, LogIn } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { authService } from "@/services/authService";
+import useAuthStore from "@/stores/useAuthStore";
+import useUserStore from "@/stores/useUserStore";
 
 const Login = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { login, isLoading } = useAuth();
+  // const { login, isLoading } = useAuth();
+  const { setToken } = useAuthStore();
+  const { setUser: setUserData } = useUserStore();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
     password: "",
     // rememberMe: false,
   });
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const login = async (credentials: any) => {
+    try {
+      setIsLoading(true);
+      const res: any = await authService.login(credentials);
+      console.log("login res", res);
+      // Store token and user data
+      // localStorage.setItem('token', res.token);
+      localStorage.setItem('accessToken', JSON.stringify(res.token));
+      localStorage.setItem('userData', JSON.stringify(res?.data?.user));
+      
+      setToken(null, res?.token);
+      setUserData(res?.data?.user);
+      // setUser(res.user);
+      // setShowLoginDialog(false);
+      navigate('/expenses', { replace: true }); // Redirect to home after successful login
+      toast({
+        title: "Login Successful",
+        description: "Welcome back!",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Login Failed",
+        description: error.response?.data?.message || "Invalid credentials",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

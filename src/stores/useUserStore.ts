@@ -13,7 +13,7 @@ type User = {
   role: { _id: string, name: string }
 }
 
-const useAuthStore = create<UserStore>()(persist(((set) => ({
+const useUserStore = create<UserStore>()(persist(((set) => ({
   user: null,
   setUser: (user: User) => set({ user })
 })),
@@ -23,4 +23,4 @@ const useAuthStore = create<UserStore>()(persist(((set) => ({
   }
 ));
 
-export default useAuthStore;
+export default useUserStore;

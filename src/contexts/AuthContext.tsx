@@ -90,10 +90,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const res: any = await authService.login(credentials);
       console.log("login res", res);
       // Store token and user data
-      localStorage.setItem('token', res.token);
+      // localStorage.setItem('token', res.token);
+      localStorage.setItem('accessToken', JSON.stringify(res.token));
       localStorage.setItem('userData', JSON.stringify(res?.data?.user));
       
-      setToken(res?.token);
+      setToken(null, res?.token);
       setUserData(res?.data?.user);
       setUser(res.user);
       setShowLoginDialog(false);
@@ -164,6 +165,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const clearUserData = () => {
+    localStorage.removeItem('accessToken');
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
     setUser(null);

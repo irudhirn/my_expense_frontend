@@ -5,14 +5,14 @@ type AuthStore = {
   token: string,
   accessToken: string,
   refreshToken: string,
-  setToken: (token: string) => void
+  setToken: (token: string | null, accessToken?: string | null) => void
 }
 
 const useAuthStore = create<AuthStore>()(persist((set) => ({
   token: null,
   accessToken: null,
   refreshToken: null,
-  setToken: (token: string) => set({ token })
+  setToken: (token: string, accessToken: string = null) => set({ token, accessToken })
 }),
   {
     name: 'token', // name of the item in the storage (must be unique)
