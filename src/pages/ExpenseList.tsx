@@ -426,6 +426,7 @@ const ExpenseList = () => {
                   setStartDate("");
                   setEndDate("");
                   // setCategoryFilter("");
+                  setExpenseCategory("");
                   setAmountFilter({ min: "", max: "" });
                   setTimeout(() => { fetchExpenses(true); }, 100);
                 }}

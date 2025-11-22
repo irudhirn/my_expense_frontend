@@ -32,7 +32,7 @@ const AddExpense = () => {
   const fetchCategories = async () => {
     try{
       const res: any = await expenseService.fetchExpenseCategories();
-      console.log("res", res);
+      // console.log("res", res);
       setCategories(res?.categories?.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase())));
     }catch(err){
       console.error(err);
