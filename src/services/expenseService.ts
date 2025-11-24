@@ -16,6 +16,16 @@ export const expenseService = {
     return { expenses: res?.data?.data?.expenses, total: res?.data?.total};
   },
 
+  fetchStats: async (timePeriod: "7" | "30" | "90" |"180" | "365") => {
+    const res = await axios.get(`/expenses/stats/${timePeriod}`);
+    return res;
+  },
+
+  fetchTopExpenses: async (timePeriod: "5" | "10" | "20" | "30") => {
+    const res = await axios.get(`/expenses/top-expense/${timePeriod}`);
+    return res;
+  },
+
   fetchExpenseCategories: async () => {
     const res = await axios.get(`/expense-categories?select=-createdAt`);
     return { categories: res?.data?.data?.categories };

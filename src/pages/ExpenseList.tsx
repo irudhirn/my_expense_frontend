@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Search, Filter, Download, Edit, Trash2, List, Calendar, DollarSign, Clock, LogIn, Save, Upload } from "lucide-react";
+import { Search, Filter, Download, Edit, Trash2, List, Calendar, DollarSign, Clock, LogIn, Save, Upload, IndianRupee } from "lucide-react";
 import { subDays, subMonths, subYears, isAfter } from "date-fns";
 import Navbar from "../components/Layout/Navbar";
 import { expenseService } from "@/services/expenseService";
@@ -7,6 +7,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import ExpenseRow from "@/components/ExpenseList/Expense";
 import { toast } from '@/hooks/use-toast';
+import ExpensesStats from "@/components/ExpenseList/ExpensesStats";
+import { ExpenseCategory } from "@/types&Interfaces/TIExpense";
+import { Separator } from "@/components/ui/separator";
 
 interface Expense {
   _id: string;
@@ -35,13 +38,10 @@ interface ExpenseFormData {
 
 const ExpenseList = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [dateFilter, setDateFilter] = useState("");
-  // const [startDate, setStartDate] = useState(`${new Date(new Date().getFullYear(), new Date().getMonth(), 1)}`);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [expenseCategory, setExpenseCategory] = useState("");
   const [expenseAmount, setAmountFilter] = useState({ min: "", max: "" });
-  const [timePeriod, setTimePeriod] = useState("30"); // 30, 90, 365 days
   const [expenses, setExpenses] = useState<Expense[]>([]);
   
   const [showDeleteExpense, setShowDeleteExpense] = useState(false);
@@ -69,7 +69,7 @@ const ExpenseList = () => {
         expenseDescription: "",
       });
 
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState<ExpenseCategory[] | [] >([]);
 
   const fetchCategories = async () => {
     try{
@@ -83,7 +83,7 @@ const ExpenseList = () => {
 
   useEffect(() => { fetchCategories(); }, []);
 
-  const getCurrentCategory = () => categories.find(cat => cat.value === curExpense.expenseCategory);
+  // const getCurrentCategory = () => categories.find(cat => cat.value === curExpense.expenseCategory);
 
   const fetchExpenses = async (clear = false) => {
 
@@ -93,7 +93,6 @@ const ExpenseList = () => {
     const min = clear ? "" : expenseAmount.min;
     const max = clear ? "" : expenseAmount.max;
     const cat = clear ? "" : expenseCategory;
-    
 
     try{
       const res: any = await expenseService.fetchExpenses(search, start, end, min, max, cat);
@@ -111,25 +110,7 @@ const ExpenseList = () => {
     
     }
   }
-  // useEffect(() => { fetchExpenses(); }, [searchTerm, startDate, endDate, expenseAmount.min, expenseAmount.max, expenseCategory]);
   useEffect(() => { fetchExpenses(); }, []);
-
-  // const categories = ["Food & Dining", "Transportation", "Shopping", "Entertainment", "Utilities", "Healthcare", "Office", "Other"];
-
-  // Filter expenses for summary cards based on time period
-  const getTimePeriodCutoff = () => {
-    const now = new Date();
-    switch (timePeriod) {
-      case "30":
-        return subDays(now, 30);
-      case "90":
-        return subDays(now, 90);
-      case "365":
-        return subYears(now, 1);
-      default:
-        return subDays(now, 30);
-    }
-  };
 
   const timePeriodExpenses = expenses;
   // const timePeriodExpenses = expenses.filter(expense => {
@@ -140,22 +121,7 @@ const ExpenseList = () => {
 
   // Filter expenses for table display (existing filters)
   const filteredExpenses = expenses;
-  // const filteredExpenses = expenses.filter(expense => {
-  //   const matchesSearch = expense.name.toLowerCase().includes(searchTerm.toLowerCase()) || expense.vendor.toLowerCase().includes(searchTerm.toLowerCase()) || expense.category.toLowerCase().includes(searchTerm.toLowerCase());
-    
-  //   const expenseDate = new Date(expense.date);
-  //   const matchesStartDate = !startDate || expenseDate >= new Date(startDate);
-  //   const matchesEndDate = !endDate || expenseDate >= new Date(endDate);
-  //   const matchesCategory = !expenseCategory || expense.category === expenseCategory;
-  //   const matchesAmount = (!expenseAmount.min || expense.amount >= parseFloat(expenseAmount.min)) && (!expenseAmount.max || expense.amount <= parseFloat(expenseAmount.max));
-
-  //   return matchesSearch && matchesStartDate && matchesEndDate && matchesCategory && matchesAmount;
-  // });
-
-  // Summary calculations based on time period
-  // const summaryTotalAmount = timePeriodExpenses.reduce((sum, expense) => sum + expense.expenseAmount, 0);
-  // const totalAmount = filteredExpenses.reduce((sum, expense) => sum + expense.expenseAmount, 0);
-
+  
   function toLocalDateString(date: string | Date | null | undefined): string {
     // const tzOffsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
     // return tzOffsetDate.toISOString().slice(0, 10);
@@ -239,77 +205,14 @@ const ExpenseList = () => {
         <div className="flex items-center space-x-4 mb-8">
           <List className="w-8 h-8 text-primary" />
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Expense List</h1>
+            <h1 className="text-3xl font-bold text-foreground">Expense</h1>
             <p className="text-muted-foreground">View and manage your expenses</p>
           </div>
         </div>
 
-        {/* Time Period Selector */}
-        {/* <div className="flex items-center justify-end mb-6">
-          <div className="flex items-center space-x-4">
-            <Clock className="w-12 text-primary" />
-            <span className="text-lg font-medium text-foreground whitespace-nowrap !ml-2">Summary Period:</span>
-            <select
-              value={timePeriod}
-              onChange={(e) => setTimePeriod(e.target.value)}
-              className="select select-bordered"
-            >
-              <option value="30">Last 30 Days</option>
-              <option value="90">Last 90 Days</option>
-              <option value="365">Last Year</option>
-            </select>
-          </div>
-        </div> */}
+        <ExpensesStats categories={categories} />
 
-        {/* Summary Cards */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="card bg-card shadow-card">
-            <div className="card-body">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-muted-foreground">Total Expenses</p>
-                  <p className="text-2xl font-bold text-foreground">{timePeriodExpenses.length}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {timePeriod === "30" ? "Last 30 days" : timePeriod === "90" ? "Last 90 days" : "Last year"}
-                  </p>
-                </div>
-                <List className="w-8 h-8 text-primary" />
-              </div>
-            </div>
-          </div>
-
-          <div className="card bg-card shadow-card">
-            <div className="card-body">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-muted-foreground">Total Amount</p>
-                  <p className="text-2xl font-bold text-foreground">${summaryTotalAmount.toFixed(2)}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {timePeriod === "30" ? "Last 30 days" : timePeriod === "90" ? "Last 90 days" : "Last year"}
-                  </p>
-                </div>
-                <DollarSign className="w-8 h-8 text-secondary" />
-              </div>
-            </div>
-          </div>
-
-          <div className="card bg-card shadow-card">
-            <div className="card-body">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-muted-foreground">Average Amount</p>
-                  <p className="text-2xl font-bold text-foreground">
-                    ${timePeriodExpenses.length ? (summaryTotalAmount / timePeriodExpenses.length).toFixed(2) : "0.00"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {timePeriod === "30" ? "Last 30 days" : timePeriod === "90" ? "Last 90 days" : "Last year"}
-                  </p>
-                </div>
-                <Calendar className="w-8 h-8 text-accent" />
-              </div>
-            </div>
-          </div>
-        </div> */}
+        <Separator />
 
         {/* Filters */}
         <div className="card bg-card shadow-card mb-6">
@@ -325,7 +228,7 @@ const ExpenseList = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {/* Search */}
               <div className="form-control">
                 <label className="label">
