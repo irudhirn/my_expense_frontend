@@ -16,27 +16,17 @@ import Profile from "./pages/Profile";
 import AddExpense from "./pages/AddExpense";
 import ExpenseList from "./pages/ExpenseList";
 import NotFound from "./pages/NotFound";
-// import axios from "axios";
-import { axiosInstance as axios } from "./utils/globalVars";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
+import AdminRoute from "./components/Auth/AdminRoute";
+import AdminLogin from "./pages/Admin/AdminLogin";
+import AdminUsers from "./pages/Admin/AdminUsers";
+import AdminExpenses from "./pages/Admin/AdminExpenses";
+import AdminExpenseCategories from "./pages/Admin/AdminExpenseCategories";
+import AdminExpenseSubCategories from "./pages/Admin/AdminExpenseSubCategories";
 
 const queryClient = new QueryClient();
 
-// axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
-
 const App = () => {
-  // axios.interceptors.request.use((request) => {
-  //   // const token = JSON.parse(localStorage.getItem("token"))?.state?.token;
-  //   // const token = JSON.parse(localStorage.getItem("accessToken"))?.state?.accessToken;
-  //   const token = JSON.parse(localStorage.getItem("accessToken"));
-  //   // console.log("token", token);
-
-  //   if(token) request.headers.Authorization = "Bearer " + token;
-    
-  //   return request;
-  // }, (err) => {
-  //   return Promise.reject(err);
-  // })
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -46,21 +36,33 @@ const App = () => {
         <BrowserRouter>
           <AuthProvider>
             <LoginDialog />
-            <ProtectedRoute>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/admin-login" element={<AdminLogin />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route element={<ProtectedRoute />}>
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/add-expense" element={<AddExpense />} />
+                <Route path="/expenses" element={<ExpenseList />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+              <Route path="/admin" element={<AdminRoute />}>
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="expenses" element={<AdminExpenses />} />
+                <Route path="expense-categories" element={<AdminExpenseCategories />} />
+                <Route path="expense-sub-categories" element={<AdminExpenseSubCategories />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            {/* <ProtectedRoute>
               <Routes>
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/add-expense" element={<AddExpense />} />
                 <Route path="/expenses" element={<ExpenseList />} />
               </Routes>
-            </ProtectedRoute>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              {/* <Route path="*" element={<NotFound />} /> */}
-            </Routes>
+            </ProtectedRoute> */}
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

@@ -57,4 +57,9 @@ export const authService = {
     const response = await api.get('/auth/profile');
     return response.data;
   },
+
+  adminLogin: async (credentials: LoginCredentials): Promise<any> => {
+    const response = await api.post(`/admin/login`, credentials);
+    return response.data;
+  }
 };

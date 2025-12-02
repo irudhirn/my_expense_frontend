@@ -1,5 +1,5 @@
 import { ReactNode, useEffect } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 // import { useAuth } from '@/contexts/AuthContext';
 import useAuthStore from '@/stores/useAuthStore';
 // import axios from 'axios';
@@ -10,7 +10,8 @@ interface ProtectedRouteProps {
   children: ReactNode;
 }
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+// const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+const ProtectedRoute = () => {
   const { showLoginDialog, setShowLoginDialog, clearUserData } = useAuth();
   const { accessToken, token } = useAuthStore();
   const location = useLocation();
@@ -36,7 +37,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  return <>{children}</>;
+  // return <>{children}</>;
+  return <Outlet />;
 };
 
 export default ProtectedRoute;
